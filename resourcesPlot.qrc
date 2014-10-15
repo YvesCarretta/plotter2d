@@ -1,0 +1,9 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file alias="zoomin.png">images/zoomin.png</file>
+<file alias="zoomout.png">images/zoomout.png</file>
+<file alias="filesaveas.png">images/filesaveas.png</file>
+<file alias="copy.png">images/copy.png</file>
+<file alias="properties.png">images/properties.png</file>
+</qresource>
+</RCC>
