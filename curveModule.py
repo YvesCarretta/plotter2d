@@ -7,6 +7,7 @@ from PyQt4.QtGui import *
 
 import os
 from math  import *
+import re
 
 class Point:
     def __init__(self, x, y):
@@ -23,6 +24,8 @@ class Curve:
     def __init__(self):
         self.pts    = []
         self.__name   = "Curve"
+        self.__scaling = 1.0
+        self.__scalingTot = 1.0
         self.__color  = QColor(Qt.blue)
         self.__lineW  = 2
         self.__lineS  = Qt.SolidLine
@@ -37,6 +40,11 @@ class Curve:
     def getName(self):
         return self.__name    
     
+    def setScaling(self,scaleFactor):
+        self.__scaling = scaleFactor      
+    def getScaling(self):
+        return self.__scaling 
+        
     def setColor(self,color):
         self.__color = color
     def getColor(self):
@@ -99,6 +107,30 @@ class Curve:
         self.__xMax = max(vecX)
         self.__yMin = min(vecY)
         self.__yMax = max(vecY)   
+    
+    def scaling(self, scaleFactor):
+        # Mise à l'échelle de la courbe
+        # -> permet de comparer des courbes avec des ordres de grandeur très différents à un instant donné
+        self.__scaling = scaleFactor
+        self.__scalingTot *= scaleFactor
+        vecX = []
+        vecY = []
+        for pt in self.pts:
+            vecX.append(pt.getX())
+            vecY.append(pt.getY()*scaleFactor)
+        self.erase()
+        self.fill(vecX,vecY)
+        #Mise à jour des infos de la courbe
+        s = str(self.getInfo()).splitlines()
+        if 'Scale' in s[-1]:
+            s2 = s[-1].replace(s[-1],('Scale factor = ' + str(self.__scalingTot)))
+            s[-1] = s2
+            self.__info = ''
+            self.__info += s[0] 
+            for lin in s[1:]:
+                self.__info += '\n'+lin  
+        else:
+            self.__info+='\nScale factor = ' + str(self.__scalingTot)
         
     def erase(self):
         del self.pts[:]

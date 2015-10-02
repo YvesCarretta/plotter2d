@@ -68,7 +68,14 @@ class CurvePropWidget(QWidget):
         # Modification du nom des courbes
         labNameEdit    = QLabel('Name')
         self.cNameEdit = QLineEdit()
-
+        
+        # Mise à l'échelle des courbes (si nécessaire)
+        labScalingEdit    = QLabel('Scale')
+        self.cScalingEdit = QLineEdit()
+        self.cScalingEdit.setValidator(QDoubleValidator())
+        self.cScalingEdit.setAlignment(Qt.AlignLeft)
+        self.cScalingEdit.setFixedWidth(80)
+        
         # Layout des différents widgets
         
         # GroupBox des courbes
@@ -93,7 +100,9 @@ class CurvePropWidget(QWidget):
         layout = QHBoxLayout()
         layout.setSpacing(10)
         layout.addWidget(labNameEdit    )
-        layout.addWidget(self.cNameEdit ) 
+        layout.addWidget(self.cNameEdit )
+        layout.addWidget(labScalingEdit    )
+        layout.addWidget(self.cScalingEdit )
         grid.addLayout(layout,2,0,2,5)
         
         self.layout_gbCurve.addItem(grid)
@@ -244,6 +253,10 @@ class CurvePropWidget(QWidget):
         # Signal Edit du nom des courbes
         self.connect(self.cNameEdit, SIGNAL("editingFinished()"), self.__emitEditingFinishedSignal)
         
+        # Signal Edit du facteur d'échelle
+        self.connect(self.cScalingEdit, SIGNAL("editingFinished()"), self.__updScaling)
+        #self.connect(self.cScalingEdit, SIGNAL("editingFinished()"), self.__emitEditingFinishedSignal)
+        
         # Signal Edit du nom des axes
         self.connect(self.xLedit, SIGNAL("editingFinished()"), self.__upd_AxesName)
         self.connect(self.yLedit, SIGNAL("editingFinished()"), self.__upd_AxesName)
@@ -317,12 +330,21 @@ class CurvePropWidget(QWidget):
             else:
                 self.cNameEdit.setText('')
                 self.cNameEdit.setEnabled(False)
-            
+                
+            if isinstance(self.__currentItem,treeModule.QTreeWidgetItemSup):
+                col=0
+                self.cScalingEdit.setEnabled(True)
+                self.cScalingEdit.setText(self.__currentItem.text(col))
+            else:
+                self.cScalingEdit.setText('')
+                self.cScalingEdit.setEnabled(False)
+                
         if self.__currentCurve != None:
             for wid in listToDeactivate:
                 wid.setEnabled(True)
             
-            self.cNameEdit.setEnabled(True)        
+            self.cNameEdit.setEnabled(True)
+            self.cScalingEdit.setEnabled(True)            
             # Mise à jour du contenu des widget
             # Epaisseur du trait
             self.sbox_Cwidth.setValue(self.__currentCurve.getLineW())    
@@ -345,8 +367,8 @@ class CurvePropWidget(QWidget):
             self.checkBox_MarkFill.setChecked(self.__currentCurve.getMarker().fill)
             
             self.cNameEdit.setText(self.__currentCurve.getName())
-                        
-        
+            
+            self.cScalingEdit.setText(str(float(self.__currentCurve.getScaling())))
 
         
         # Nom des axes dans les label
@@ -384,11 +406,14 @@ class CurvePropWidget(QWidget):
         
         self.fontSpinBox.setValue(self.plotter2D.getFontSize())
         
+    def __updScaling(self):
+        self.__currentCurve.scaling(float(self.cScalingEdit.text()))
+        
     def __updLineStyle(self):
         t1 =  self.cbox_Cstyle.itemData(self.cbox_Cstyle.currentIndex())
         self.__currentCurve.setLineS(t1.toInt()[0]) # on récupère l'enum dans le QVariant renvoyé par ItemData
         self.callback()
-    
+        
     def __updWidth(self):
         self.__currentCurve.setLineW(self.sbox_Cwidth.value())
         self.callback()
@@ -419,7 +444,7 @@ class CurvePropWidget(QWidget):
         self.callback()   
         
     def __emitEditingFinishedSignal(self):
-        self.emit(SIGNAL("updateTextInTree"), self.cNameEdit.text())     
+        self.emit(SIGNAL("updateTextInTree"), str(self.cNameEdit.text()))
         
     
     def __upd_AxesName(self):

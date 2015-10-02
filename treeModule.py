@@ -71,6 +71,7 @@ class QTreeCurveDisplay(QWidget):
         elif isinstance(item,QTreeWidgetItemCurve): 
             item.setText(col,text)
             item.getCurve().setName(text)
+            item.updItemCurveInfo()
       
 # Pour réimplémenter des évènements comme des drags and drop        
 class QTreeWidgetCurve(QTreeWidget):
@@ -194,6 +195,7 @@ class QTreeWidgetItemSup(QTreeWidgetItem):
         
                 
 class QTreeWidgetItemCurve(QTreeWidgetItem):
+    
     def __init__(self, tree, curve):
         super(QTreeWidgetItemCurve, self).__init__(tree)
         self.__curve       = curve
@@ -207,8 +209,8 @@ class QTreeWidgetItemCurve(QTreeWidgetItem):
         self.setFlags(self.flags() & ~Qt.ItemIsDropEnabled)
         
         # Onglet contenant les infos sur la courbe: 
-        item3 = QTreeWidgetItem(self,[self.__curve.getInfo()])             
-        item3.setFlags(item3.flags() & ~Qt.ItemIsDropEnabled)     
+        self.__item3 = QTreeWidgetItem(self,[self.__curve.getInfo()])             
+        self.__item3.setFlags(self.__item3.flags() & ~Qt.ItemIsDropEnabled)     
         
     def updCheckState(self):
         if self.__curve.getVisibility(): # courbe visible
@@ -231,6 +233,9 @@ class QTreeWidgetItemCurve(QTreeWidgetItem):
     
     def getCurve(self): 
         return self.__curve
+        
+    def updItemCurveInfo(self): 
+        self.__item3.setText(0, self.__curve.getInfo())          
         
 
     

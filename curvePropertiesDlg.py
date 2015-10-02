@@ -12,7 +12,7 @@ import loadTabModule   as loadModule
 import treeModule
 
 class CurvePropertiesDlg(QDialog):
-
+    
     def __init__(self, plotter2D, callback, parent=None):
         super(CurvePropertiesDlg, self).__init__(parent)
                 

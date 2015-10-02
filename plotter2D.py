@@ -188,7 +188,7 @@ class Plotter(QWidget):
             if self.curvePropDlg is not None:
                 # on refraichit CurvePropertiesDlg si l'objet existe déjà -> 
                 # label des xmin - xmax etc à remettre à jour dans le dialogue
-                self.curvePropDlg.setPlotSettings(self.zoomStack[self.curZoom]) # on met à jour le plotSettings
+                #self.curvePropDlg.setPlotSettings(self.zoomStack[self.curZoom]) # on met à jour le plotSettings
                 self.curvePropDlg.getCurvePropWidget().refresh()   
                 
             
@@ -843,7 +843,7 @@ class PlotSettings():
     def __init__(self):
         self.__xmin = 0.0
         self.__xmax = 10.0
-        self.__numXTicks = 8
+        self.__numXTicks = 5
     
         self.__ymin = 0.0
         self.__ymax = 10.0
