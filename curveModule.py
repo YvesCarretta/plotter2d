@@ -109,7 +109,7 @@ class Curve:
         self.__yMax = max(vecY)   
     
     def scaling(self, scaleFactor):
-        # Mise à l'échelle de la courbe
+        ''' Mise à l'échelle de la courbe'''
         # -> permet de comparer des courbes avec des ordres de grandeur très différents à un instant donné
         self.__scaling = scaleFactor
         self.__scalingTot *= scaleFactor
@@ -120,7 +120,7 @@ class Curve:
             vecY.append(pt.getY()*scaleFactor)
         self.erase()
         self.fill(vecX,vecY)
-        #Mise à jour des infos de la courbe
+        # Mise à jour des infos de la courbe
         s = str(self.getInfo()).splitlines()
         if 'Scale' in s[-1]:
             s2 = s[-1].replace(s[-1],('Scale factor = ' + str(self.__scalingTot)))

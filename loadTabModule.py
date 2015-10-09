@@ -20,19 +20,19 @@ class LoadFileTab(QWidget):
 
         layout = QVBoxLayout()
         
-        self.tabWidget        = QTabWidget(self)#self.tabWidgetLoadGen)
+        self.tabWidget        = QTabWidget(self)
         
-        # Chargement de fichiers .ascii
+        # Widget permettant le chargement de fichiers .ascii
         self.qWid_loadAscii = LoadAsciiWidget(self.openRep,self.txtBrowser,\
                                               self.__plotter2D,self.refresh)
         self.tabWidget.addTab(self.qWid_loadAscii,"Load .ascii")      
 
-        # Tracer d'une courbe en fonction de son expression analytique
+        # Widget utilisé pour tracer d'une courbe en fonction de son expression analytique
         self.qWid_DrawAnaFun = DrawAnaFunWidget(self.txtBrowser,self.__plotter2D,\
                                                 self.refresh)
         self.tabWidget.addTab(self.qWid_DrawAnaFun,'Draw y = f(x)')              
 
-        # Chargement du contenu d'un fichier .m issu de lubri
+        # Widget permettant d'importer le contenu d'un fichier .m genere par MetaLub2.0
         self.qWid_LoadMFile = LoadMFileWidget(self.openRep,self.txtBrowser,\
                                               self.__plotter2D,self.refresh)
         self.tabWidget.addTab(self.qWid_LoadMFile,'Load .m')   
@@ -49,7 +49,8 @@ class LoadFileTab(QWidget):
 
 
 class LoadFileWidget(QWidget):
-    
+    ''' Classe mere de LoadAsciiWidget - DrawAnaFunWidget 
+        et LoadMFileWidget '''
     def __init__(self,openRep,txtBrowser,plotter2D,refresh):
         super(LoadFileWidget, self).__init__()
         self.openRep    = openRep
@@ -81,7 +82,8 @@ class LoadFileWidget(QWidget):
         return filename           
         
 class LoadMFileWidget(LoadFileWidget):
-
+    ''' Widget permettant d'importer le contenu 
+    d'un fichier .m issu de MetaLub2.0 '''
     def __init__(self,openRep,txtBrowser,plotter2D,refresh):
         super(LoadMFileWidget, self).__init__(openRep,txtBrowser,plotter2D,refresh)   
         # LineEdit et bouttons
@@ -130,13 +132,13 @@ class LoadMFileWidget(LoadFileWidget):
         t1       = fileName
         # 1. Le contenu des lineEdit correspond à des fichiers ?
         if os.path.isfile(t1):
-            # 2. Est-ce que c'est un fichier .ascii ?
+            # 2. Est-ce que c'est un fichier .m ?
             if (t1.split('.')[-1] == 'm'):                   
                 # ---------------------------------------------
                 # 3. Lecture du fichier
                 cDict = self.plotter2D.loadMFile(fileName)
                 if len(self.lEditTreeName_mFile.text()) == 0:
-                    absP = os.path.abspath(fileName)
+                    absP     = os.path.abspath(fileName)
                     treeName = os.path.basename(absP.replace('/',os.sep))
                 else:
                     treeName = self.lEditTreeName_mFile.text()
@@ -155,7 +157,8 @@ class LoadMFileWidget(LoadFileWidget):
         return           
         
 class LoadAsciiWidget(LoadFileWidget):
-
+    '''Widget utilisé pour le chargement de fichiers .ascii 
+    '''
     def __init__(self,openRep,txtBrowser,plotter2D,refresh):
         super(LoadAsciiWidget, self).__init__(openRep,txtBrowser,plotter2D,refresh)   
 
@@ -470,7 +473,8 @@ class LoadAsciiWidget(LoadFileWidget):
             filename     = self.selectFile(existingText)        
 
 class DrawAnaFunWidget(QWidget):
-
+    '''Widget permettant de tracer une courbe 
+       en fonction de son expression analytique'''
     def __init__(self, txtBrowser,plotter2D,refresh):
         super(DrawAnaFunWidget, self).__init__()        
         
@@ -506,11 +510,9 @@ class DrawAnaFunWidget(QWidget):
         
         self.buttonLoadFun = QPushButton('Draw')
         grid.addWidget(self.buttonLoadFun,5,0)     
-
         
         gboxAnaFun = QGroupBox(self)
         gboxAnaFun.setLayout(grid)        
-        
         
         vertLayout = QVBoxLayout()
         vertLayout.addWidget(gboxAnaFun)
@@ -522,7 +524,6 @@ class DrawAnaFunWidget(QWidget):
         self.connect(self.buttonLoadFun,SIGNAL("clicked()"), self.__genAnaFun)                
 
     def __genAnaFun(self):
-
         listLabel = [self.lEditFunc_expr,self.lEditFunc_xMin,self.lEditFunc_xMax,self.lEditFunc_nbPoints]
         for elem in listLabel:
             if len(elem.text()) == 0:

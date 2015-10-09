@@ -16,9 +16,7 @@ class CurvePropWidget(QWidget):
         # propriétés des courbes
         self.plotter2D   = plotter2D
         self.__curveList = plotter2D.getCurveList()
-        
-        self.__plotSettings = plotter2D.getPlotSettings()
-        
+               
         self.__currentItem  = None
         self.__currentCurve = None
         
@@ -303,11 +301,6 @@ class CurvePropWidget(QWidget):
         elif isinstance(item,treeModule.QTreeWidgetItem): 
             self.__currentCurve = None
             self.refresh()
-            
-            
-
-    def setPlotSettings(self,plotSettings):
-        self.__plotSettings = plotSettings
 
     
     def refresh(self):
@@ -376,11 +369,11 @@ class CurvePropWidget(QWidget):
         self.yLedit.setText(self.plotter2D.getYlabel())
         
         # Limite des axes :
-        self.xMinLedit.setText(str(self.__plotSettings.getXmin()))
-        self.xMaxLedit.setText(str(self.__plotSettings.getXmax()))
+        self.xMinLedit.setText(str(self.plotter2D.getPlotSettings().getXmin()))
+        self.xMaxLedit.setText(str(self.plotter2D.getPlotSettings().getXmax()))
         
-        self.yMinLedit.setText(str(self.__plotSettings.getYmin()))
-        self.yMaxLedit.setText(str(self.__plotSettings.getYmax()))
+        self.yMinLedit.setText(str(self.plotter2D.getPlotSettings().getYmin()))
+        self.yMaxLedit.setText(str(self.plotter2D.getPlotSettings().getYmax()))
         
         # Légende
         self.legendShow.setChecked(self.plotter2D.getLegend().getDisplay())
@@ -458,11 +451,11 @@ class CurvePropWidget(QWidget):
         
         
     def __upd_AxesLimits(self):   
-        self.__plotSettings.setXmin(float(self.xMinLedit.text()))
-        self.__plotSettings.setXmax(float(self.xMaxLedit.text()))
+        self.plotter2D.getPlotSettings().setXmin(float(self.xMinLedit.text()))
+        self.plotter2D.getPlotSettings().setXmax(float(self.xMaxLedit.text()))
 
-        self.__plotSettings.setYmin(float(self.yMinLedit.text()))
-        self.__plotSettings.setYmax(float(self.yMaxLedit.text()))        
+        self.plotter2D.getPlotSettings().setYmin(float(self.yMinLedit.text()))
+        self.plotter2D.getPlotSettings().setYmax(float(self.yMaxLedit.text()))        
         
         self.callback() 
     
@@ -479,8 +472,8 @@ class CurvePropWidget(QWidget):
         xMax = max(vecXmax) 
         dX = max(vecXmax) - min(vecXmin) 
         s = 0.02
-        self.__plotSettings.setXmin(xMin-s*dX)
-        self.__plotSettings.setXmax(xMax+s*dX)
+        self.plotter2D.getPlotSettings().setXmin(xMin-s*dX)
+        self.plotter2D.getPlotSettings().setXmax(xMax+s*dX)
         self.refresh()
         self.callback()        
 
@@ -498,8 +491,8 @@ class CurvePropWidget(QWidget):
         yMax = max(vecYmax) 
         dY = max(vecYmax) - min(vecYmin) 
         s = 0.02      
-        self.__plotSettings.setYmin(yMin-s*dY)
-        self.__plotSettings.setYmax(yMax+s*dY)
+        self.plotter2D.getPlotSettings().setYmin(yMin-s*dY)
+        self.plotter2D.getPlotSettings().setYmax(yMax+s*dY)
         self.refresh()
         self.callback()                
         

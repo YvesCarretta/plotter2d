@@ -14,9 +14,9 @@ class QTreeCurveDisplay(QWidget):
 
     def __init__(self, plotter2D, callback, treeCurves):
         super(QTreeCurveDisplay, self).__init__()
-        # Liste des courbes -> permet d'accéder aux propriétés 
-        # des courbes pour mettre à jour les widget et modifier les
-        # propriétés des courbes
+        # Liste des courbes -> permet d'acceder aux proprietes 
+        # des courbes pour mettre �jour les widget et modifier les
+        # proprietes des courbes
         self.__plotter2D = plotter2D
                 
         self.callback  = callback
@@ -57,7 +57,7 @@ class QTreeCurveDisplay(QWidget):
 
 
     def __apply(self):
-        self.__plotter2D.updCurveList() # On met à jour la liste de courbes à tracer
+        self.__plotter2D.updCurveList() # On met a jour la liste de courbes a tracer
         self.callback()
     
     def getTreeCurves(self):
@@ -73,7 +73,7 @@ class QTreeCurveDisplay(QWidget):
             item.getCurve().setName(text)
             item.updItemCurveInfo()
       
-# Pour réimplémenter des évènements comme des drags and drop        
+# Utile pour reimplementer des evenements comme des drags and drop        
 class QTreeWidgetCurve(QTreeWidget):
     def __init__(self):
         super(QTreeWidget, self).__init__()
@@ -136,11 +136,11 @@ class QTreeWidgetCurve(QTreeWidget):
                 self.takeTopLevelItem(index.row())
             elif isinstance(item,QTreeWidgetItemCurve): 
                 # je ne vaux pas qu'on puisse supprimer le QTreeWidgetItem 
-                # associé à chaque QTreeWidgetItemCurve lorsqu'on clique 
+                # associe a chaque QTreeWidgetItemCurve lorsqu'on clique 
                 # uniquement sur QTreeWidgetItem
                 item.parent().removeChild(item)
       
-    # Fonction à optimiser -> changer uniquement l'item sélectionné
+    # Fonction a�optimiser -> changer uniquement l'item selectionne
     def __clickCheck(self, item, col):
         it = QTreeWidgetItemIterator(self)
         while it.value():
@@ -200,12 +200,12 @@ class QTreeWidgetItemCurve(QTreeWidgetItem):
         super(QTreeWidgetItemCurve, self).__init__(tree)
         self.__curve       = curve
         
-        # super pour éviter d'aller changer le nom de la courbe
-        # après avoir changé le nom de l'item (comportement qu'on aurait eu en
+        # super pour eviter d'aller changer le nom de la courbe
+        # apres avoir change le nom de l'item (comportement qu'on aurait eu en
         # utilisant self.setText(0,self.__curve.getName())
         self.setText(0,self.__curve.getName())
                 
-        # empêche cet objet d'être la cible d'un drop
+        # empeche cet objet d'etre la cible d'un drop
         self.setFlags(self.flags() & ~Qt.ItemIsDropEnabled)
         
         # Onglet contenant les infos sur la courbe: 
@@ -217,7 +217,7 @@ class QTreeWidgetItemCurve(QTreeWidgetItem):
             state = 2 
         else: # courbe pas visible
             state = 0 
-        self.setCheckState(0, state) # le 1er argument est le numéro de la colonne
+        self.setCheckState(0, state) # le 1er argument est le numero de la colonne
                                      # Qt.Unchecked -> the item is unchecked.
                                      # Qt.Checked   -> the item is checked.        
     def updCurveVisibility(self):

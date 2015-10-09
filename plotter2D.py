@@ -5,12 +5,12 @@ import math
 import sys
 import os  # -> pour connaitre le chemin vers 
            # le répertoire que l'on propose à l'utilisateur
-           # lorsqu'on sauve
-from PyQt4.QtGui import *
+           # lorsqu'on sauvegarde une image
+from PyQt4.QtGui  import *
 from PyQt4.QtCore import *
-from PyQt4.Qt import *
+from PyQt4.Qt     import *
 
-from curveModule import *
+from curveModule  import *
 
 import qrc_resourcesPlot  #obtenu à l'aide de la commande : 
 # D:\LibsVS2012\Python-2.7.5-tcl8.5\pyrcc4.exe -o qrc_resourcesPlot.py resourcesPlot.qrc
@@ -22,7 +22,8 @@ import treeModule
 class Plotter(QWidget):
     def __init__(self, parent = None):
         super(QWidget, self).__init__(parent)
-        
+
+        # Couleur associée au widget
         self.setBackgroundRole(QPalette.Dark)# QPalette.Light)
                                              # QPalette.Midlight)
         
@@ -30,7 +31,42 @@ class Plotter(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setFocusPolicy(Qt.StrongFocus)
         
+        # Def des boutons et des signaux associés
+        self.__setButton() 
 
+        # Attribus de la classe :
+        self.__marginLR = 75 # marges cotés (Left and Right)
+        self.__margin   = 50      
+        
+        self.curZoom    = 0
+        self.rubberBandIsShown = False
+        self.rubberBandRect    = QRect()
+
+        self.zoomStack      = [] # Liste de PlotSettings()
+        self.__plotSettings = PlotSettings()
+        self.__setPlotSettings(self.__plotSettings);
+                
+        self.treeCurves = treeModule.QTreeWidgetCurve()
+            
+        self.__curveList = [] # Liste qui contient les objets curve à tracer
+        
+        # Label des axes
+        self.__xlabel = 'axe X'
+        self.__ylabel = 'axe Y'
+        self.__fontsize = 14
+        
+        # Légende
+        self.__legend = Legend()
+        
+        # Objet de dialogue pour définir les propriétés des courbes
+        self.curvePropDlg = None
+
+        # Fin de déclaration des attributs
+        
+    def __setButton(self):
+        """Definition des boutons et des connections SIGNAL-SLOT correspondantes 
+        """
+        # Zoom In
         self.zoomInButton = QToolButton(self)
         self.zoomInButton.setIcon(QIcon(':/zoomin.png'))
         self.zoomInButton.adjustSize()
@@ -38,6 +74,7 @@ class Plotter(QWidget):
         # Le bouton reste enfoncé quand on appuie dessus
         self.zoomInButton.setCheckable(True) 
 
+        # Zoom Out
         self.zoomOutButton = QToolButton(self)
         self.zoomOutButton.setIcon(QIcon(':/zoomout.png'))
         self.zoomOutButton.adjustSize()
@@ -45,6 +82,7 @@ class Plotter(QWidget):
         self.zoomOutButton.setEnabled(False)
         self.connect(self.zoomOutButton, SIGNAL("clicked()"), self.__zoomOut)
         
+        # Save
         self.saveButton = QToolButton(self)
         self.saveButton.setIcon(QIcon(':/filesaveas.png'))
         self.saveButton.adjustSize()
@@ -63,51 +101,14 @@ class Plotter(QWidget):
         self.curveCp.setToolTip("Copy the image in order to paste it in another program (word, powerpoint, etc.)")
         self.connect(self.curveCp, SIGNAL("clicked()"), self.__copyImage)          
         
-        self.__buttonToHide = [] # liste des boutons à masquer lorsqu'on fait une copie du widget (copier-coller)
+        # liste des boutons à masquer lorsqu'on fait une copie du widget (copier-coller)
+        self.__buttonToHide = [] 
         self.__buttonToHide.append(self.zoomOutButton)
         self.__buttonToHide.append(self.zoomInButton)
         self.__buttonToHide.append(self.saveButton)
         self.__buttonToHide.append(self.curveP)
-        self.__buttonToHide.append(self.curveCp)
-
-      
-        # Attribus de la classe :
-        self.__marginLR = 75 # marges cotés (Left and Right)
-        self.__margin = 50      
+        self.__buttonToHide.append(self.curveCp)        
         
-        self.curZoom = 0
-        self.rubberBandIsShown = False
-        self.rubberBandRect = QRect()
-                
-        self.zoomStack = [] # Liste de PlotSettings()
-
-        #self.curveDict =  {'UserData':{}} 
-        self.treeCurves = treeModule.QTreeWidgetCurve()
-        
-        # dictionnaire de dictionnaire de courbes
-        # contient les courbes chargées en mémoire
-        
-        # http://docs.python.org/library/stdtypes.html#mapping-types-dict
-        # d[key] = value ->  Set d[key] to value
-        # del d[key]     ->  Remove d[key] from d. Raises a KeyError if key is not in the map.  
-            
-        self.__curveList = [] # Liste qui contient les objets curve à tracer
-        
-        self.__plotSettings = PlotSettings()
-        self.__setPlotSettings(self.__plotSettings);
-        
-        # Label des axes
-        self.__xlabel = 'axe X'
-        self.__ylabel = 'axe Y'
-        self.__fontsize = 14
-        
-        # Légende
-        self.__legend = Legend()
-        
-        # Objet de dialogue pour définir les propriétés des courbes
-        self.curvePropDlg = None
-
-        # Fin de déclaration des attributs
         
     def getCurveList(self):
         return self.__curveList
@@ -138,7 +139,7 @@ class Plotter(QWidget):
             # on remet à jour le contenu de l'interface du CurvePropertiesDlg
             # si l'objet existe déjà
             self.curvePropDlg.getCurvePropWidget().refresh() 
-        else : #self.curvePropDlg is None:
+        else : 
             self.curvePropDlg = curvePropertiesDlg.CurvePropertiesDlg(
                     self, self.update, self)
         
@@ -159,6 +160,10 @@ class Plotter(QWidget):
         self.treeCurves.addCurve(curve,setName)
         
     def appendCurveDict(self,dict,setName):
+        ''' ajout d'un dictionnaire de courbes (dict) 
+        dans le QTreeWidget "treeCurves" sous l'onglet "setName".
+        Utile pour charger le contenu du _res.m de MetaLub
+        '''
         for key in dict:
             curve = dict[key]
             curve.computeRange() # calcul xmin, xmax etc. 
@@ -201,7 +206,8 @@ class Plotter(QWidget):
         self.update()
 
     def minimumSizeHint(self):
-        return QSize(6 * self.__marginLR, 4 * self.__margin) # The QSize class defines the size of a two-dimensional object using integer point precision.
+        # nb: the QSize class defines the size of a two-dimensional object using integer point precision.
+        return QSize( 6 * self.__marginLR, 4 * self.__margin) 
     
     def sizeHint(self):
         return QSize(12 * self.__marginLR, 8 * self.__margin)
@@ -352,7 +358,7 @@ class Plotter(QWidget):
             if self.curvePropDlg is not None:
                 # on refraichit CurvePropertiesDlg si l'objet existe déjà -> 
                 # label des xmin - xmax etc à remettre à jour dans le dialogue
-                self.curvePropDlg.getCurvePropWidget().setPlotSettings(self.zoomStack[-1])
+                #self.curvePropDlg.getCurvePropWidget().setPlotSettings(self.zoomStack[-1])
                 self.curvePropDlg.getCurvePropWidget().refresh()                         
             
             return
@@ -511,6 +517,7 @@ class Plotter(QWidget):
  
                 
     def __drawAxisLabel(self,painter):
+        ''' Tracé du label des axes '''
         painter.save()
 
         font = painter.font()
@@ -593,18 +600,21 @@ class Plotter(QWidget):
         for b in self.__buttonToHide:
             b.setVisible(True);      
             
+            
     def loadMFile(self,fileName):
-        # Je laisse la fonction ici pour pouvoir faire un load en ligne de commande 
-        # via l'objet plotter
+        ''' Fonction permettant d'importer les résultats d'un fichier _res.m
+        obtenu avec MetaLub2.0
+        '''
+        # Nb: je laisse cette fonction dans la classe plotter  
+        # pour pouvoir faire un load en ligne de commande 
+        # via un objet de type plotter
         
         # Info à ajouter à chaque courbe
-        absP = os.path.abspath(fileName)
-        repName  = os.path.dirname(absP)   
-        fName    = os.path.basename(absP)
-        info = fName+'\n'+repName
+        info = fileName
         # -----
         curveDict = {}
-        f = open(fileName,'r')
+        # Lecture du fichier _res.m
+        f = open(fileName,'r') 
         txt = f.readline()
         while txt != '':
             a = txt.split('(')
@@ -629,8 +639,8 @@ class Plotter(QWidget):
                 curveDict[str(cName)].addPoint(x,y)
             txt = f.readline()    
         f.close()        
-        return curveDict
-         
+        return curveDict        
+               
          
 class Legend:
     # On définit une enum pour désigner la position de la légende
@@ -643,9 +653,9 @@ class Legend:
 
         # Distance entre le coin sup. gauche du cadre 
         # de traçage des courbes et le coin supérieur gauche de la légende       
-        self.__dxLeg = 5 # selon X
-        self.__dyLeg = 5 # selon Y
-        self.__display =  True # Si True -> on affiche la légende
+        self.__dxLeg   = 5    # selon X
+        self.__dyLeg   = 5    # selon Y
+        self.__display = True # Si True -> on affiche la légende
     
         self.__position = Legend.NorthWest
     
@@ -672,9 +682,7 @@ class Legend:
             self.__drawCItem(painter,curveList)
             
         painter.restore()
-        
-
-               
+             
     def __drawLegBorder(self,painter, curveList, fontSize,marginLR,margin,widthWidg,heightWidg):
         '''Tracé du rectangle entourant la légende.
         Ses dimensions sont calculées sur base du nom de courbe le plus long
@@ -702,9 +710,10 @@ class Legend:
         self.__pixelsWide = fm.width(curveList[ind].getName());
         self.__pixelsHigh = fm.height();   
                
-        self.__widthLeg  = self.__hSpace*3 + self.__lMiniCurve + self.__pixelsWide  # largeur du rectangle encadrant la légende
-        self.__heightLeg = nCurveToShow*self.__pixelsHigh + (nCurveToShow+1)*self.__vSpace      # hauteur du rectangle encadrant la légende
-
+        # largeur du rectangle encadrant la légende
+        self.__widthLeg  = self.__hSpace*3 + self.__lMiniCurve + self.__pixelsWide  
+        # hauteur du rectangle encadrant la légende
+        self.__heightLeg = nCurveToShow*self.__pixelsHigh + (nCurveToShow+1)*self.__vSpace      
         # coordonnées du coin sup gauche du rectangle autour de la légende
         xSupG, ySupG = self.__computeRCornerPos(marginLR,margin,widthWidg,heightWidg)
                 
@@ -718,32 +727,34 @@ class Legend:
         painter.drawRect(self.rectLegend)    
         return True  
         
-    def __computeRCornerPos(self,marginLR,margin,widthWidg,heightWidg):        
+    def __computeRCornerPos(self,marginLR,margin,widthWidg,heightWidg):
+        ''' calcul des coordonnées du coin sup gauche 
+        du rectangle autour de la légende '''        
         if (self.__position == Legend.NorthWest):
             self.__dxLeg = 5 
             self.__dyLeg = 5 
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg
 
         elif (self.__position == Legend.NorthCenter):
             widthGraphe = widthWidg-2*marginLR
             self.__dxLeg = (widthGraphe - self.__widthLeg)/2.0
             self.__dyLeg = 5 
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg      
             
         elif (self.__position == Legend.NorthEast):
             widthGraphe = widthWidg-2*marginLR
             self.__dxLeg = widthGraphe - self.__widthLeg - 5
             self.__dyLeg = 5 
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg     
 
         elif (self.__position == Legend.CenterWest):
             heightGraphe = heightWidg-2*margin
             self.__dxLeg = 5 
             self.__dyLeg = (heightGraphe - self.__heightLeg)/2.0
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg            
 
         elif (self.__position == Legend.CenterEast):
@@ -751,14 +762,14 @@ class Legend:
             heightGraphe = heightWidg-2*margin
             self.__dxLeg = widthGraphe - self.__widthLeg - 5
             self.__dyLeg = (heightGraphe - self.__heightLeg)/2.0
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg            
 
         elif (self.__position == Legend.SouthWest):
             heightGraphe = heightWidg-2*margin
             self.__dxLeg = 5
             self.__dyLeg = (heightGraphe - self.__heightLeg) -5
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg                   
             
         elif (self.__position == Legend.SouthCenter):
@@ -766,7 +777,7 @@ class Legend:
             heightGraphe = heightWidg-2*margin
             self.__dxLeg = (widthGraphe - self.__widthLeg)/2.0
             self.__dyLeg = (heightGraphe - self.__heightLeg) -5
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg                 
             
         elif (self.__position == Legend.SouthEast):
@@ -774,7 +785,7 @@ class Legend:
             heightGraphe = heightWidg-2*margin
             self.__dxLeg = widthGraphe - self.__widthLeg - 5
             self.__dyLeg = (heightGraphe - self.__heightLeg) -5
-            xSupG = marginLR + self.__dxLeg # coordonnées du coin sup gauche du rectangle autour de la légende
+            xSupG = marginLR + self.__dxLeg 
             ySupG = margin   + self.__dyLeg                
 
         return xSupG,ySupG        
@@ -798,7 +809,7 @@ class Legend:
                 i=i+1        
         
     def __drawCItem(self,painter,curveList):
-        '''Tracé d'un morceau de courbe en vis a vis du nom de la courbe
+        '''Tracé d'un trait en vis a vis du nom de la courbe
         '''
         pSupG = self.rectLegend.topLeft()
         xSupG = pSupG.x()
@@ -813,7 +824,7 @@ class Legend:
                 poly    = QPolygon(2) #2 points à relier
                 poly[0] = QPoint(x1             , y1)
                 poly[1] = QPoint(x1 + self.__lMiniCurve, y1)
-                # Tracé de la courbe
+                # Tracé de la ligne
                 pen = QPen()
                 pen.setColor(c.getColor())        
                 pen.setWidth(c.getLineW())
@@ -841,11 +852,11 @@ class Legend:
     
 class PlotSettings():
     def __init__(self):
-        self.__xmin = 0.0
+        self.__xmin =  0.0
         self.__xmax = 10.0
-        self.__numXTicks = 5
+        self.__numXTicks = 8
     
-        self.__ymin = 0.0
+        self.__ymin =  0.0
         self.__ymax = 10.0
         self.__numYTicks = 5
     
@@ -857,8 +868,8 @@ class PlotSettings():
         # axes
         (xminf, bdXf) = self.__computegrid(self.__xmin, self.__xmax, self.__numXTicks)
         (yminf, bdYf) = self.__computegrid(self.__ymin, self.__ymax, self.__numYTicks)
+        '''
         if 1: # debug grid
-            '''
             print '-----------------'
             print "self.xmin,xmax =", self.xmin, self.xmax
             print "self.ymin,ymax =", self.ymin, self.ymax
@@ -868,17 +879,17 @@ class PlotSettings():
             print "yminf =", yminf
             print "bdYf =" , bdYf        
             print '-----------------'
-            '''
+        '''
         return ( xminf, bdXf, yminf, bdYf )   
     def __computegrid(self, xmin, xmax, gridX):
         # find best step
-        dx = xmax-xmin; #print "dX=", dx
-        dgX = dx/gridX; #print "dgX=", dgX      # wanted dX
+        dx  = xmax-xmin  # print "dX=" , dx
+        dgX = dx/gridX   # print "dgX=", dgX      # wanted dX
         
         # step in [0,10]        
-        expo = math.floor(math.log(dgX,10)); #print "expo=", expo
-        factor = math.pow(10.0, expo); #print "factor=", factor
-        dgX3 = dgX/factor; #print "dgX3=", dgX3
+        expo   = math.floor(math.log(dgX,10)) # print "expo=", expo
+        factor = math.pow(10.0, expo)         # print "factor=", factor
+        dgX3   = dgX/factor                   # print "dgX3=", dgX3
         
         # best integer increment
         if dgX3<1.5:
@@ -891,24 +902,16 @@ class PlotSettings():
             bdXi=10
 
         bdXf =  bdXi*factor       
-           
-        #print "bdXi=", bdXi
-        #print "bdXf=", bdXf
-        #print "expo=", expo
-        
+                   
         # find first grid pos.
         xminf = xmin/factor
         xmini = math.floor(xminf)
-        #print "xminf=", xminf
-        #print "xmini=", xmini
         
         while 1:
             if xmini%bdXi==0 and xmini>=xminf: break
             xmini+=1
         xminf = xmini*factor
         
-        #print "xminf=", xminf
-        #print "xmini=", xmini
         return (xminf, bdXf)       
     
     def setXmin(self,xmin):
@@ -944,27 +947,24 @@ def main():
     form = Plotter()
     form.setXlabel("Position dans l'emprise [mm]")
     form.setYlabel("Pression [MPa]")
-    #'''
-    # Lecture des fichiers contenant les points à tracer
-    curve1 = Curve()
-    curve1.loadData2('vectors/p_x.ascii','vectors/p_y.ascii',"Pression d'interface")
-    #form.setCurveData(curve1) 
-    
-    form.addCurve(curve1)
 
-    form.updCurveList()      
+    # Lecture de 2 fichiers .ascii contenant les points à tracer
+    curve1 = Curve()
+    curve1.loadData2('vectors/p_x.ascii','vectors/p_y.ascii',"Pression d'interface")   
     
-    # ajout de la courbe à tracer dans le plotter
+    form.addCurve(curve1) # ajout de la courbe à tracer dans le plotter
+    form.updCurveList()       
+    
+    # Lecture d'un fichier .ascii contenant 2 colonnes
     curve2 = Curve()
     curve2.loadData1('vectors/p_f.ascii','Pression du lubrifiant')
-    #form.setCurveData(curve2) 
+    curve2.setColor(Qt.red)
+    form.addCurve(curve2) 
+    form.updCurveList()    
 
-  
-
-    '''
+    # Lecture d'un fichier res.m contenant les résultats calculés avec MetaLub
     cDict = form.loadMFile('vectors/A11_FL_CylRigc_res.m')
-    form.appendCurveDict(cDict,'A11_FL_CylRigc_res.m')    # à virer et à mettre dans loadMFile
-    '''
+    form.appendCurveDict(cDict,'A11_FL_CylRigc_res.m')   
 
     # Intervalle sur lequel on affiche les courbes
     form.getPlotSettings().setXmin(-9.)
@@ -972,26 +972,20 @@ def main():
     
     form.getPlotSettings().setYmin(  0.)
     form.getPlotSettings().setYmax(400.)
-    #'''
-    '''
-    c = Curve()
-    c.fill2(fct, (-1.5,10), 150)    
-    c.setName('Courbe 1')
-    form.addCurve(c)
+
+    # Tracé d'une fonction sur base de son expression analytique
+    c3 = Curve()
+    c3.fill2(fct, (-1.5,10), 150)    
+    c3.setName('Courbe 1')
+    c3.hide()  # la courbe est en mémoire mais on choisit de ne pas l'afficher
+    form.addCurve(c3)
+        
+    c4 = Curve()
+    c4.fill2(fct2, (-1.5,10), 150)  
+    c4.setName('1+0.25 * sinus(2x)')
+    c4.hide()  # la courbe est en mémoire mais on choisit de ne pas l'afficher
+    form.addCurve(c4)
     
-    form.getPlotSettings().setXmin(-6.1123)
-    form.getPlotSettings().setXmax(12.6)
-    
-    form.getPlotSettings().setYmin(-1.2)
-    form.getPlotSettings().setYmax(2.2)
-    
-    c2 = Curve()
-    c2.fill2(fct2, (-1.5,10), 150)  
-    c2.setName('1+0.25 * sinus(2x)')
-    
-    
-    form.addCurve(c2)
-    '''
     
     form.show()
     app.exec_()    
