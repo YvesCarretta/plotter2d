@@ -640,6 +640,38 @@ class Plotter(QWidget):
             txt = f.readline()    
         f.close()        
         return curveDict        
+        
+        
+    def adjustPlotSettings(self, sX = 0.02, sY = 0.02):
+        ''' Mise a jour des valeurs min et max des axes 
+        sur base du domaine des courbes a tracer.'''
+        vecXmin = []
+        vecXmax = []   
+        vecYmin = []
+        vecYmax = []   
+        
+        for c in self.__curveList:
+            if c.getVisibility(): # uniquement si la courbe est affichée
+                vecXmin.append(c.getXmin())
+                vecXmax.append(c.getXmax())
+                vecYmin.append(c.getYmin())
+                vecYmax.append(c.getYmax())                
+        if len(vecXmin) == 0: # si la liste est vide -> pas d'ajustement car pas de courbe
+            return                
+        
+        xMin = min(vecXmin)
+        xMax = max(vecXmax) 
+        dX   = xMax - xMin 
+
+        yMin = min(vecYmin)
+        yMax = max(vecYmax) 
+        dY   = yMax - yMin 
+        
+        self.getPlotSettings().setXmin(xMin-sX*dX)
+        self.getPlotSettings().setXmax(xMax+sX*dX)
+        
+        self.getPlotSettings().setYmin(yMin-sY*dY)
+        self.getPlotSettings().setYmax(yMax+sY*dY)        
                
          
 class Legend:
@@ -886,7 +918,7 @@ class PlotSettings():
         dx  = xmax-xmin  # print "dX=" , dx
         dgX = dx/gridX   # print "dgX=", dgX      # wanted dX
         
-        # step in [0,10]        
+        # step in [0,10]    
         expo   = math.floor(math.log(dgX,10)) # print "expo=", expo
         factor = math.pow(10.0, expo)         # print "factor=", factor
         dgX3   = dgX/factor                   # print "dgX3=", dgX3
